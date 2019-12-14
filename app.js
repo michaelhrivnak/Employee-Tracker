@@ -53,6 +53,9 @@ async function loadMainMenu(){
             case "Add a Role":
                 await addRole();
                 break;
+            case "Update Employee Role":
+                await updateEmployeeRole();
+                break;
             case "Add an Employee":
                 await addEmployee();
                 break;
@@ -151,7 +154,7 @@ async function addRole(){
         let role = {
             title: answers.title,
             salary: answers.salary,
-            department: departments.find(e=>e.name === answers.department).id
+            department_id: departments.find(e=>e.name === answers.department).id
         };
 
         await myBLL.addRole(role)
@@ -164,16 +167,66 @@ async function addRole(){
     loadMainMenu();
 }
 
+async function updateEmployeeRole(){
+    let q = questions.updateEmployeeRole;
+    let confirm = questions.confirmInput;
+    let roles;
+    let roleNames;
+    let employees;
+    let employeeNames;
+    let employee;
+    let role;
+
+    await myBLL.getAllRoles().then(res=>{
+        roles = res;
+        roleNames = res.map(e=>e.title);
+    });
+
+    await myBLL.getAllEmployees().then(res=>{
+        employees = res;
+        employeeNames = res.map(e => `${e.first_name} ${e.last_name}`);
+    });
+
+    q.find(e=>e.name === "employee").choices = employeeNames;
+    q.find(e=>e.name === "employee").pageSize = employeeNames.length;
+    q.find(e=>e.name === "role").choices = roleNames;
+    q.find(e=>e.name === "role").pageSize = roleNames.length;
+    
+    await inquirer.prompt(q)
+    .then(async function(answers){
+    
+        employee = employees.find(e=> `${e.first_name} ${e.last_name}` === answers.employee);
+        role = roles.find(e=>e.title === answers.role);
+
+    });
+
+    confirm.message = `You would like to update the role of ${employee.first_name} ${employee.last_name} to ${role.title}?`;
+
+    await inquirer.prompt(confirm)
+    .then(async function(answer){
+        if(answer.confirm){
+            await myBLL.updateEmployeeRole(employee,role)
+            .then(res=>{
+                console.log(res);
+                return;
+            });
+        }
+    });
+
+    loadMainMenu();
+
+}
+
 async function addEmployee(){
     let q = questions.addEmployee;
-    let departments;
-    let departmentNames;
+    let managers;
+    let managerNames;
     let roles;
     let roleNames;
     
-    await myBLL.getAllDepartments().then(res=>{
-        departmentNames = res.map(e=>e.name);
-        departments = res;
+    await myBLL.getAllManagerNames().then(res=>{
+        managerNames = res.map(e=>e.name);
+        managers = res;
     });
 
     await myBLL.getAllRoles().then(res=>{
@@ -181,17 +234,22 @@ async function addEmployee(){
         roleNames = res.map(e=>e.title);
     });
 
-    q.find(e => e.name === "department").choices = departmentNames;
     q.find(e => e.name === "role").choices = roleNames;
-
+    q.find(e => e.name === "role").pageSize = roleNames.length;
+    q.find(e => e.name === "manager").choices = managerNames;
+    q.find(e => e.name === "manager").pageSize = managerNames.length;
+    
     await inquirer.prompt(q)
     .then(async function(answers){
+        
+        let role_id = roles.find(e=>e.title === answers.role).id;
+        let manager_id = managers.find(e => e.name === answers.manager).id;
         
         let employee = {
             first_name: answers.first_name,
             last_name: answers.last_name,
-            role_id: roles.find(e=>e.title === answers.role).id,
-            department: departments.find(e=>e.name === answers.department).id
+            role_id: role_id,
+            manager_id: manager_id 
         };
 
         await myBLL.addEmployee(employee)
