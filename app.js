@@ -66,6 +66,7 @@ async function loadMainMenu(){
         }            
     });    
 }
+
 async function viewEmployeesByManager(){
     let managers;
     let managerList;
@@ -88,6 +89,7 @@ async function viewEmployeesByManager(){
             //go back to previous menu
             break;
         default:
+            //get the right manager from the list
             manager = managers.find(e => e.name === answer.choice);
             await myBLL.getEmployeesByManager(manager).then(res=>{
                 dispayResults(res);
@@ -122,6 +124,7 @@ async function getAllEmployeesFullData(){
     });
     loadMainMenu();
 }
+
 async function addDepartment(){
     
     await inquirer.prompt(questions.addDepartment)
@@ -146,8 +149,10 @@ async function addRole(){
         departments = res;
     });
 
+    //set the list of choices
     q.find(e=>e.name === "department").choices = departmentNames;
-    
+    q.find(e=>e.name === "department").pageSize = departmentNames.length;
+
     await inquirer.prompt(q)
     .then(async function(answers){
         
