@@ -232,6 +232,7 @@ async function addEmployee(){
     await myBLL.getAllManagerNames().then(res=>{
         managerNames = res.map(e=>e.name);
         managers = res;
+        managerNames.push("None");
     });
 
     await myBLL.getAllRoles().then(res=>{
@@ -248,7 +249,8 @@ async function addEmployee(){
     .then(async function(answers){
         
         let role_id = roles.find(e=>e.title === answers.role).id;
-        let manager_id = managers.find(e => e.name === answers.manager).id;
+        
+        let manager_id = answers.manager === "None"?null: managers.find(e => e.name === answers.manager).id;
         
         let employee = {
             first_name: answers.first_name,
@@ -259,7 +261,7 @@ async function addEmployee(){
 
         await myBLL.addEmployee(employee)
         .then(res=>{
-            console.log(res);
+            console.log("New Employee ID: " + res);
         });
 
     });
